@@ -1,0 +1,42 @@
+name: Generate Snake Game
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" 
+  workflow_dispatch:
+  push:
+    branches:
+    - main
+    
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout to 'main' Branch ✔️
+        uses: actions/checkout@v3
+
+      - name: Generate SnakeGame.svg File 🐍
+        uses: Platane/snk/svg-only@v1.1.2
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          svg_out_path: profile/assets/SnakeGame.svg
+
+      - name: Import GPG Keys 🗝️
+        uses: crazy-max/ghaction-import-gpg@v4.3.0
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Sign Commit and Push Changes 🎉
+        run: |
+          git config --global user.email "${{ steps.import-gpg.outputs.email }}"
+          git config --global user.name "${{ steps.import-gpg.outputs.name }}"
+          set +e
+          git add .
+          git commit -S -m "SnakeGame Auto Updated By Jarvis 🤖"
+          set -e
+          git push
